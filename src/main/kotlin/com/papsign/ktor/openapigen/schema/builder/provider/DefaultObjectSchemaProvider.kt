@@ -20,9 +20,10 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
     private val log = classLogger()
 
     override fun provide(apiGen: OpenAPIGen, provider: ModuleProvider<*>): List<SchemaBuilder> {
-        val namer = provider.ofType<SchemaNamer>().let {
-            val last = it.lastOrNull() ?: DefaultSchemaNamer.also { log.debug("No ${SchemaNamer::class} provided, using ${it::class}") }
-            if (it.size > 1) log.warn("Multiple ${SchemaNamer::class} provided, choosing last: ${last::class}")
+        val namer = provider.ofType<SchemaNamer>().let { schemaNamers ->
+            val last = schemaNamers.lastOrNull()
+                ?: DefaultSchemaNamer.also { log.debug("No ${SchemaNamer::class} provided, using ${it::class}") }
+            if (schemaNamers.size > 1) log.warn("Multiple ${SchemaNamer::class} provided, choosing last: ${last::class}")
             last
         }
         return listOf(Builder(apiGen, namer))
@@ -34,10 +35,14 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
 
         private val refs = HashMap<KType, SchemaModel.SchemaModelRef<*>>()
 
-        override fun build(type: KType, builder: FinalSchemaBuilder, finalize: (SchemaModel<*>)->SchemaModel<*>): SchemaModel<*> {
+        override fun build(
+            type: KType,
+            builder: FinalSchemaBuilder,
+            finalize: (SchemaModel<*>) -> SchemaModel<*>
+        ): SchemaModel<*> {
             checkType(type)
             val nonNullType = type.withNullability(false)
-            return refs[nonNullType] ?: {
+            return refs[nonNullType] ?: run {
                 val erasure = nonNullType.jvmErasure
                 val name = namer[nonNullType]
                 val ref = SchemaModel.SchemaModelRef<Any?>("#/components/schemas/$name")
@@ -46,7 +51,7 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
                     SchemaModel.OneSchemaModelOf(erasure.sealedSubclasses.map { builder.build(it.starProjectedType) })
                 } else {
                     val props = type.memberProperties.filter { it.source.visibility == KVisibility.PUBLIC }
-                    SchemaModel.SchemaModelObj<Any?>(
+                    SchemaModel.SchemaModelObj(
                         props.associate {
                             Pair(it.name, builder.build(it.type, it.source.annotations))
                         },
@@ -60,7 +65,7 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
                 if (existing != null && existing != final) log.error("Schema with name $name already exists, and is not the same as the new one, replacing...")
                 apiGen.api.components.schemas[name] = final
                 ref
-            }()
+            }
         }
     }
 }
