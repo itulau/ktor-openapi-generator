@@ -13,9 +13,13 @@ plugins {
     id("org.jetbrains.dokka") version "1.7.20"
 }
 
-group = "dev.forst"
+group = "io.github.darkxanter"
 base.archivesName.set("ktor-open-api")
-version = (versioning.info?.tag ?: versioning.info?.lastTag ?: versioning.info?.build) ?: "SNAPSHOT"
+version = (versioning.info?.tag ?: versioning.info?.lastTag ?: versioning.info?.build)?.let {
+    if (versioning.info.dirty) "$it-SNAPSHOT" else it
+} ?: "SNAPSHOT"
+
+println("version $version")
 
 repositories {
     mavenCentral()
@@ -133,10 +137,14 @@ publishing {
                         name.set("Lukas Forst")
                         email.set("lukas@forst.dev")
                     }
+                    developer {
+                        id.set("darkxanter")
+                        name.set("Sergey Shumov")
+                    }
                 }
                 scm {
-                    connection.set("scm:git:git://github.com/LukasForst/ktor-openapi-generator.git")
-                    url.set("https://github.com/LukasForst/ktor-openapi-generator")
+                    connection.set("scm:git:git://github.com/darkxanter/ktor-openapi-generator.git")
+                    url.set("https://github.com/darkxanter/ktor-openapi-generator")
                 }
             }
         }
@@ -147,8 +155,11 @@ signing {
     val signingKeyId = project.findProperty("gpg.keyId") as String? ?: System.getenv("GPG_KEY_ID")
     val signingKey = project.findProperty("gpg.key") as String? ?: System.getenv("GPG_KEY")
     val signingPassword = project.findProperty("gpg.keyPassword") as String? ?: System.getenv("GPG_KEY_PASSWORD")
-
-    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+    if (signingKeyId != null) {
+        useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+    } else {
+        useGpgCmd()
+    }
     sign(publishing.publications[publication])
 }
 
