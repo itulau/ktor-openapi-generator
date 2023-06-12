@@ -29,11 +29,11 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
     // Ktor server dependencies
-    implementation("io.ktor:ktor-server-core:2.2.3")
-    implementation("io.ktor:ktor-server-auth:2.2.3")
-    implementation("io.ktor:ktor-serialization-jackson:2.2.2")
-    implementation("io.ktor:ktor-server-content-negotiation:2.2.2")
-    implementation("io.ktor:ktor-server-status-pages:2.2.3")
+    implementation("io.ktor:ktor-server-core:2.3.1")
+    implementation("io.ktor:ktor-server-auth:2.3.1")
+    implementation("io.ktor:ktor-serialization-jackson:2.3.1")
+    implementation("io.ktor:ktor-server-content-negotiation:2.3.1")
+    implementation("io.ktor:ktor-server-status-pages:2.3.1")
 
     implementation("org.slf4j:slf4j-api:2.0.6")
 
@@ -44,14 +44,14 @@ dependencies {
     implementation("org.reflections:reflections:0.10.2") // only used while initializing
 
     // testing
-    testImplementation("io.ktor:ktor-server-netty:2.2.2")
-    testImplementation("io.ktor:ktor-server-core:2.2.2")
-    testImplementation("io.ktor:ktor-server-test-host:2.2.3")
-    testImplementation("io.ktor:ktor-server-auth:2.2.2")
-    testImplementation("io.ktor:ktor-server-auth-jwt:2.2.2")
-    testImplementation("io.ktor:ktor-server-content-negotiation:2.2.2")
-    testImplementation("io.ktor:ktor-serialization-jackson:2.2.2")
-    testImplementation("io.ktor:ktor-client-content-negotiation:2.2.2")
+    testImplementation("io.ktor:ktor-server-netty:2.3.1")
+    testImplementation("io.ktor:ktor-server-core:2.3.1")
+    testImplementation("io.ktor:ktor-server-test-host:2.3.1")
+    testImplementation("io.ktor:ktor-server-auth:2.3.1")
+    testImplementation("io.ktor:ktor-server-auth-jwt:2.3.1")
+    testImplementation("io.ktor:ktor-server-content-negotiation:2.3.1")
+    testImplementation("io.ktor:ktor-serialization-jackson:2.3.1")
+    testImplementation("io.ktor:ktor-client-content-negotiation:2.3.1")
 
     testImplementation(kotlin("test"))
     testImplementation(kotlin("stdlib-jdk8"))
