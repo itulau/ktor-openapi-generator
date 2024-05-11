@@ -27,14 +27,8 @@ dependencies {
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.contentNegotiation)
     implementation(libs.ktor.server.statusPages)
-    implementation(libs.ktor.serialization.jackson)
-
     implementation(libs.slf4j)
-
-    implementation(libs.jackson.datatype.jsr310) // needed for multipart parsing
-    // when updating version here, don't forge to update version in OpenAPIGen.kt line 68
     implementation(libs.swaggerUi)
-
     implementation(libs.reflections) // only used while initializing
 
     // testing
@@ -43,6 +37,8 @@ dependencies {
     testImplementation(libs.ktor.server.test)
     testImplementation(libs.ktor.server.auth.jwt)
     testImplementation(libs.ktor.client.contentNegotiation)
+    testImplementation(libs.jackson.datatype.jsr310)
+    testImplementation(libs.ktor.serialization.jackson)
 
     testImplementation(libs.logback) // logging framework for the tests
 
