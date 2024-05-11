@@ -3,14 +3,12 @@ import java.net.URL
 
 
 plugins {
-    kotlin("jvm") version "1.8.10"
-
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.dokka)
+    alias(libs.plugins.nemerosaVersioning)
+    alias(libs.plugins.nexusPublish)
     `maven-publish`
     signing
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    // we can not switch to 3.x.x because we want to keep it compatible with JVM 8
-    id("net.nemerosa.versioning") version "2.15.1"
-    id("org.jetbrains.dokka") version "1.7.20"
 }
 
 group = "io.github.darkxanter"
@@ -19,50 +17,43 @@ version = (versioning.info?.tag ?: versioning.info?.lastTag ?: versioning.info?.
     if (versioning.info.dirty) "$it-SNAPSHOT" else it
 } ?: "SNAPSHOT"
 
-println("version $version")
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-
     // Ktor server dependencies
-    implementation("io.ktor:ktor-server-core:2.3.1")
-    implementation("io.ktor:ktor-server-auth:2.3.1")
-    implementation("io.ktor:ktor-serialization-jackson:2.3.1")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.1")
-    implementation("io.ktor:ktor-server-status-pages:2.3.1")
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.contentNegotiation)
+    implementation(libs.ktor.server.statusPages)
+    implementation(libs.ktor.serialization.jackson)
 
-    implementation("org.slf4j:slf4j-api:2.0.6")
+    implementation(libs.slf4j)
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2") // needed for multipart parsing
+    implementation(libs.jackson.datatype.jsr310) // needed for multipart parsing
     // when updating version here, don't forge to update version in OpenAPIGen.kt line 68
-    implementation("org.webjars:swagger-ui:4.15.5")
+    implementation(libs.swaggerUi)
 
-    implementation("org.reflections:reflections:0.10.2") // only used while initializing
+    implementation(libs.reflections) // only used while initializing
 
     // testing
-    testImplementation("io.ktor:ktor-server-netty:2.3.1")
-    testImplementation("io.ktor:ktor-server-core:2.3.1")
-    testImplementation("io.ktor:ktor-server-test-host:2.3.1")
-    testImplementation("io.ktor:ktor-server-auth:2.3.1")
-    testImplementation("io.ktor:ktor-server-auth-jwt:2.3.1")
-    testImplementation("io.ktor:ktor-server-content-negotiation:2.3.1")
-    testImplementation("io.ktor:ktor-serialization-jackson:2.3.1")
-    testImplementation("io.ktor:ktor-client-content-negotiation:2.3.1")
-
     testImplementation(kotlin("test"))
-    testImplementation(kotlin("stdlib-jdk8"))
+    testImplementation(libs.ktor.server.netty)
+    testImplementation(libs.ktor.server.test)
+    testImplementation(libs.ktor.server.auth.jwt)
+    testImplementation(libs.ktor.client.contentNegotiation)
 
-    // we want to keep it compatible with java 8, thus we use 1.3 series, see
-    // https://www.mail-archive.com/logback-user@qos.ch/msg05119.html
-    testImplementation("ch.qos.logback:logback-classic:1.3.5") // logging framework for the tests
+    testImplementation(libs.logback) // logging framework for the tests
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2") // junit testing framework
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2") // generated parameters for tests
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2") // testing runtime
+    testImplementation(libs.junit.jupiter.api) // junit testing framework
+    testImplementation(libs.junit.jupiter.params) // generated parameters for tests
+    testRuntimeOnly(libs.junit.jupiter.engine) // testing runtime
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 tasks {
@@ -78,7 +69,7 @@ tasks {
     }
 
     dokkaHtml {
-        outputDirectory.set(File("$buildDir/docs"))
+        outputDirectory.set(File("${layout.buildDirectory.asFile.get()}/docs"))
 
         dokkaSourceSets {
             configureEach {
@@ -86,7 +77,7 @@ tasks {
 
                 sourceLink {
                     localDirectory.set(file("src/main/kotlin"))
-                    remoteUrl.set(URL("https://github.com/LukasForst/ktor-openapi-generator/tree/master/src/main/kotlin"))
+                    remoteUrl.set(URL("https://github.com/darkxanter/ktor-openapi-generator/tree/master/src/main/kotlin"))
                     remoteLineSuffix.set("#L")
                 }
             }
@@ -119,12 +110,12 @@ publishing {
             pom {
                 name.set("Ktor OpenAPI/Swagger 3 Generator")
                 description.set("The Ktor OpenAPI Generator is a library to automatically generate the descriptor as you route your ktor application.")
-                url.set("https://github.com/LukasForst/ktor-openapi-generator")
+                url.set("https://github.com/darkxanter/ktor-openapi-generator")
                 packaging = "jar"
                 licenses {
                     license {
                         name.set("Apache-2.0 License")
-                        url.set("https://github.com/LukasForst/ktor-openapi-generator/blob/master/LICENSE")
+                        url.set("https://github.com/darkxanter/ktor-openapi-generator/blob/master/LICENSE")
                     }
                 }
                 developers {
