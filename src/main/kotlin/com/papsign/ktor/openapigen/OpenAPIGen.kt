@@ -65,7 +65,7 @@ class OpenAPIGen(
 
         var swaggerUiPath = "swagger-ui"
         var serveSwaggerUi = true
-        var swaggerUiVersion = "4.15.5"
+        var swaggerUiVersion = "5.17.2"
 
         var scanPackagesForModules: Array<String> = arrayOf()
 

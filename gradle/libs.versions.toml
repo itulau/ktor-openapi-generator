@@ -9,7 +9,7 @@ dokka = "1.8.20"
 nemerosaVersioning = "2.15.1"
 nexusPublish = "1.1.0"
 # when updating version here, don't forge to update version in OpenAPIGen.kt line 68
-swaggerUi = "4.15.5"
+swaggerUi = "5.17.2"
 reflections = "0.10.2"
 jackson = "2.17.1"
 axion = "1.15.1"

@@ -27,6 +27,7 @@ object ValueClassServer {
     @JvmInline
     value class Currency(val value: Long)
 
+    @Description("Our product")
     data class Product(
         val id: ProductId = ProductId(),
         val name: String,
