@@ -1,12 +1,13 @@
 package com.papsign.ktor.openapigen.parameters.parsers.converters.primitive
 
 import com.papsign.ktor.openapigen.getKType
+import com.papsign.ktor.openapigen.memberProperties
 import com.papsign.ktor.openapigen.parameters.parsers.converters.Converter
 import com.papsign.ktor.openapigen.parameters.parsers.converters.ConverterSelector
 import com.papsign.ktor.openapigen.parameters.util.localDateTimeFormatter
 import com.papsign.ktor.openapigen.parameters.util.offsetDateTimeFormatter
 import com.papsign.ktor.openapigen.parameters.util.zonedDateTimeFormatter
-import io.ktor.util.reflect.*
+import com.papsign.ktor.openapigen.strip
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.*
@@ -14,9 +15,15 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.*
 import kotlin.reflect.KType
+import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.jvmErasure
 
 @Suppress("RemoveExplicitTypeArguments")
 object PrimitiveConverter : ConverterSelector {
+    private val KType.isValue get() = jvmErasure.isValue
+    // we also make a strip type to remove platform type
+    // for example, if we get a UUID! it will be converted to UUID
+    private val KType.unwrappedType get() = (if (isValue) memberProperties.first().type else this).strip()
 
     private inline fun <reified T> primitive(noinline cvt: (String) -> T): Pair<KType, Converter> {
         return getKType<T>() to object : Converter {
@@ -24,7 +31,22 @@ object PrimitiveConverter : ConverterSelector {
         }
     }
 
-//    private val dateFormat = SimpleDateFormat()
+    private fun getPrimitiveConverter(type: KType): Converter {
+        return primitiveParsers[type] ?: error("could not find Converter for primitive type $type")
+    }
+
+    private fun createValueClassConverter(type: KType): Converter {
+        val unwrappedType = type.unwrappedType
+        val primitiveConverter = getPrimitiveConverter(unwrappedType)
+        val primaryConstructor = type.jvmErasure.primaryConstructor ?: error("primary constructor not exists")
+
+        return object : Converter {
+            override fun convert(value: String): Any? {
+                val convertedValue = primitiveConverter.convert(value) ?: return null
+                return primaryConstructor.call(convertedValue)
+            }
+        }
+    }
 
     private val primitiveParsers = mapOf(
         primitive { it.toByteOrNull() ?: 0 },
@@ -147,11 +169,18 @@ object PrimitiveConverter : ConverterSelector {
         primitive<String?> { it }
     )
 
+    private val valueClassConverters = mutableMapOf<KType, Converter>()
+
     override fun canHandle(type: KType): Boolean {
-        return primitiveParsers.containsKey(type)
+        return primitiveParsers.containsKey(type.unwrappedType)
     }
 
     override fun create(type: KType): Converter {
-        return primitiveParsers[type] ?: error("could not find Converter for primitive type $type")
+        if (type.isValue) {
+            return valueClassConverters.computeIfAbsent(type) {
+                createValueClassConverter(type)
+            }
+        }
+        return getPrimitiveConverter(type)
     }
 }

@@ -47,18 +47,25 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
                 val name = namer[nonNullType]
                 val ref = SchemaModel.SchemaModelRef<Any?>("#/components/schemas/$name")
                 refs[nonNullType] = ref // needed to prevent infinite recursion
-                val new = if (erasure.isSealed) {
-                    SchemaModel.OneSchemaModelOf(erasure.sealedSubclasses.map { builder.build(it.starProjectedType) })
-                } else {
-                    val props = type.memberProperties.filter { it.source.visibility == KVisibility.PUBLIC }
-                    SchemaModel.SchemaModelObj(
-                        props.associate {
-                            Pair(it.name, builder.build(it.type, it.source.annotations))
-                        },
-                        props.filter {
-                            !it.type.isMarkedNullable
-                        }.map { it.name }
-                    )
+                val new = when {
+                    erasure.isSealed -> {
+                        SchemaModel.OneSchemaModelOf(erasure.sealedSubclasses.map { builder.build(it.starProjectedType) })
+                    }
+                    erasure.isValue -> {
+                        val prop = type.memberProperties.first()
+                        builder.build(prop.type, prop.source.annotations)
+                    }
+                    else -> {
+                        val props = type.memberProperties.filter { it.source.visibility == KVisibility.PUBLIC }
+                        SchemaModel.SchemaModelObj(
+                            props.associate {
+                                Pair(it.name, builder.build(it.type, it.source.annotations))
+                            },
+                            props.filter {
+                                !it.type.isMarkedNullable
+                            }.map { it.name }
+                        )
+                    }
                 }
                 val final = finalize(new)
                 val existing = apiGen.api.components.schemas[name]

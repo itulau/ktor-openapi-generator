@@ -5,17 +5,72 @@ import com.papsign.ktor.openapigen.parameters.parsers.testSelector
 import com.papsign.ktor.openapigen.parameters.parsers.testSelectorFails
 import org.junit.jupiter.api.Test
 import java.time.*
+import java.util.*
 
 class PrimitiveBuilderTest {
+    private inline fun <reified T> testSelector(expected: T, rawValue: String?) {
+        val key = "key"
+        val parse = mapOf(
+            key to listOfNotNull(rawValue)
+        )
+        FormBuilderFactory.testSelector(expected, key, parse, true)
+    }
+
+    @JvmInline
+    value class Value<T>(val value: T)
+
+    @JvmInline
+    value class ValueInt(val value: Int)
+
+    @JvmInline
+    value class ValueUuid(val value: UUID)
+
+    @Test
+    fun testInt() {
+        testSelector(1, "1")
+    }
 
     @Test
     fun testFloat() {
-        val key = "key"
-        val expected = 1f
-        val parse = mapOf(
-            key to listOf("1")
+        testSelector(1f, "1")
+    }
+
+    @Test
+    fun `test value class int`() {
+        testSelector(ValueInt(1), "1")
+    }
+
+    @Test
+    fun `test value class uuid`() {
+        testSelector(
+            ValueUuid(UUID.fromString("4704c8b1-72ba-49ee-bf40-5efa03816bf1")),
+            "4704c8b1-72ba-49ee-bf40-5efa03816bf1"
         )
-        FormBuilderFactory.testSelector(expected, key, parse, true)
+    }
+
+    @Test
+    fun `test generic value class int`() {
+        testSelector(Value(1), "1")
+    }
+
+    @Test
+    fun `test generic value class double`() {
+        testSelector(Value(1.0), "1.0")
+    }
+
+    @Test
+    fun `test generic value class string`() {
+        testSelector(Value("some string"), "some string")
+    }
+
+    @Test
+    fun `test generic value class uuid`() {
+        testSelector(Value(UUID.fromString("4704c8b1-72ba-49ee-bf40-5efa03816bf1")), "4704c8b1-72ba-49ee-bf40-5efa03816bf1")
+    }
+
+    @Test
+    fun `test generic value class LocalDate`() {
+        testSelector(Value(LocalDate.of(2024, 1, 1)), "2024-01-01")
     }
 
     @Test
@@ -144,8 +199,10 @@ class PrimitiveBuilderTest {
             "2021-02-27 10:30:00.1Z" to OffsetDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(100_000_000),
             "2021-02-27 10:30:00.12Z" to OffsetDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(120_000_000),
             "2021-02-27 10:30:00.123Z" to OffsetDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(123_000_000),
-            "2021-02-27 10:30:00.12345Z" to OffsetDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(123_450_000),
-            "2021-02-27 10:30:00.123456789Z" to OffsetDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(123_456_789)
+            "2021-02-27 10:30:00.12345Z" to OffsetDateTime.of(baseDateTime, ZoneOffset.ofHours(0))
+                .plusNanos(123_450_000),
+            "2021-02-27 10:30:00.123456789Z" to OffsetDateTime.of(baseDateTime, ZoneOffset.ofHours(0))
+                .plusNanos(123_456_789)
         )
         cases.forEach {
             val expected = it.second
@@ -195,8 +252,10 @@ class PrimitiveBuilderTest {
             "2021-02-27 10:30:00.1Z" to ZonedDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(100_000_000),
             "2021-02-27 10:30:00.12Z" to ZonedDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(120_000_000),
             "2021-02-27 10:30:00.123Z" to ZonedDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(123_000_000),
-            "2021-02-27 10:30:00.12345Z" to ZonedDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(123_450_000),
-            "2021-02-27 10:30:00.123456789Z" to ZonedDateTime.of(baseDateTime, ZoneOffset.ofHours(0)).plusNanos(123_456_789)
+            "2021-02-27 10:30:00.12345Z" to ZonedDateTime.of(baseDateTime, ZoneOffset.ofHours(0))
+                .plusNanos(123_450_000),
+            "2021-02-27 10:30:00.123456789Z" to ZonedDateTime.of(baseDateTime, ZoneOffset.ofHours(0))
+                .plusNanos(123_456_789)
         )
         cases.forEach {
             val expected = it.second
@@ -232,7 +291,8 @@ class PrimitiveBuilderTest {
     fun testInstant() {
         val key = "key"
 
-        val instant = OffsetDateTime.of(LocalDate.of(2021, Month.FEBRUARY, 27), LocalTime.of(10, 30, 0), ZoneOffset.UTC).toInstant()
+        val instant = OffsetDateTime.of(LocalDate.of(2021, Month.FEBRUARY, 27), LocalTime.of(10, 30, 0), ZoneOffset.UTC)
+            .toInstant()
         val epochMillis = instant.toEpochMilli()
 
         val cases = listOf<Pair<String, Instant>>(
