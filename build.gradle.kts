@@ -1,21 +1,40 @@
 import org.gradle.jvm.tasks.Jar
+import pl.allegro.tech.build.axion.release.domain.properties.TagProperties
+import pl.allegro.tech.build.axion.release.domain.scm.ScmPosition
 import java.net.URL
-
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.dokka)
-    alias(libs.plugins.nemerosaVersioning)
+    alias(libs.plugins.axion)
     alias(libs.plugins.nexusPublish)
     `maven-publish`
     signing
 }
 
+scmVersion {
+    tag {
+        prefix = ""
+        versionSeparator = ""
+    }
+
+    val regex = Regex("""\d+\.\d+\.\d+""")
+    tag.deserializer { _: TagProperties, _: ScmPosition, tagName: String ->
+        if (tagName.matches(regex)) tagName else "0.0.0"
+    }
+
+    useHighestVersion = true
+
+    branchVersionIncrementer = mapOf(
+        "feature/.*" to "incrementMinor"
+    )
+}
+
 group = "io.github.darkxanter"
 base.archivesName.set("ktor-open-api")
-version = (versioning.info?.tag ?: versioning.info?.lastTag ?: versioning.info?.build)?.let {
-    if (versioning.info.dirty) "$it-SNAPSHOT" else it
-} ?: "SNAPSHOT"
+version = scmVersion.version
+
+println("version $version")
 
 repositories {
     mavenCentral()
@@ -37,6 +56,7 @@ dependencies {
     testImplementation(libs.ktor.server.test)
     testImplementation(libs.ktor.server.auth.jwt)
     testImplementation(libs.ktor.client.contentNegotiation)
+    testImplementation(libs.jackson.kotlin)
     testImplementation(libs.jackson.datatype.jsr310)
     testImplementation(libs.ktor.serialization.jackson)
 
