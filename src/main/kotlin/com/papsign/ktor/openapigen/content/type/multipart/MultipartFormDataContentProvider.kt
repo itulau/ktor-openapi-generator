@@ -4,12 +4,16 @@ import com.papsign.ktor.openapigen.*
 import com.papsign.ktor.openapigen.annotations.mapping.openAPIName
 import com.papsign.ktor.openapigen.content.type.BodyParser
 import com.papsign.ktor.openapigen.content.type.ContentTypeProvider
+import com.papsign.ktor.openapigen.exceptions.OpenAPIParseException
 import com.papsign.ktor.openapigen.exceptions.assertContent
 import com.papsign.ktor.openapigen.model.operation.MediaTypeEncodingModel
 import com.papsign.ktor.openapigen.model.operation.MediaTypeModel
 import com.papsign.ktor.openapigen.model.schema.SchemaModel
 import com.papsign.ktor.openapigen.modules.ModuleProvider
 import com.papsign.ktor.openapigen.modules.ofType
+import com.papsign.ktor.openapigen.parameters.util.localDateTimeFormatter
+import com.papsign.ktor.openapigen.parameters.util.offsetDateTimeFormatter
+import com.papsign.ktor.openapigen.parameters.util.zonedDateTimeFormatter
 import com.papsign.ktor.openapigen.schema.builder.provider.FinalSchemaBuilderProviderModule
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -18,7 +22,8 @@ import io.ktor.server.request.*
 import io.ktor.util.*
 import io.ktor.util.pipeline.*
 import java.io.InputStream
-import java.time.Instant
+import java.time.*
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.set
 import kotlin.reflect.KClass
@@ -80,6 +85,13 @@ object MultipartFormDataContentProvider : BodyParser, OpenAPIGenModuleExtension 
         cvt(Instant::parse),
         cvt(String::toBoolean, false),
         cvt(UUID::fromString),
+        cvt({ LocalDate.parse(it, DateTimeFormatter.ISO_DATE) }),
+        cvt({ LocalTime.parse(it, DateTimeFormatter.ISO_LOCAL_TIME) }),
+        cvt({ OffsetTime.parse(it, DateTimeFormatter.ISO_OFFSET_TIME) }),
+        cvt({ LocalDateTime.parse(it, localDateTimeFormatter) }),
+        cvt({ OffsetDateTime.parse(it, offsetDateTimeFormatter) }),
+        cvt({ ZonedDateTime.parse(it, zonedDateTimeFormatter) }),
+        cvt({ it.toLongOrNull()?.let(Instant::ofEpochMilli) ?: Instant.from(offsetDateTimeFormatter.parse(it)) }),
     )
 
     private val conversionsByType = run {
@@ -115,6 +127,7 @@ object MultipartFormDataContentProvider : BodyParser, OpenAPIGenModuleExtension 
                 }
             }
         }
+
         @Suppress("UNCHECKED_CAST")
         val ctor = (clazz.classifier as KClass<T>).primaryConstructor!!
         return ctor.callBy(ctor.parameters.associateWith {

@@ -1,5 +1,10 @@
 package com.papsign.ktor.openapigen.exceptions
 
-import kotlin.reflect.KClass
+import kotlin.reflect.KType
 
-class OpenAPIParseException(val request: KClass<*>, val actual: Set<KClass<*>>): Exception("Could not parse $request as $actual")
+class OpenAPIParseException(
+    val field: String,
+    val content: String,
+    val type: KType,
+    cause: Throwable? = null
+) : Exception("Could not parse field $field with value '$content'", cause)
