@@ -1,3 +1,8 @@
+# 0.6.4
+Features:
+- Value class support in multipart requests
+- Java time support in multipart requests
+
 # 0.6.3
 Infrastructure:
 - Kotlin 1.8.22
