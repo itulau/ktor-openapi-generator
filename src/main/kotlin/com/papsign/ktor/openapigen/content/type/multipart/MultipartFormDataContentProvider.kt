@@ -145,7 +145,16 @@ object MultipartFormDataContentProvider : BodyParser, OpenAPIGenModuleExtension 
                         }
 
                         is String -> {
-                            cvt.parser(raw)
+                            try {
+                                cvt.parser(raw)
+                            } catch (e: Throwable) {
+                                throw OpenAPIParseException(
+                                    field = it.openAPIName ?: "",
+                                    content = raw,
+                                    type = it.type,
+                                    cause = e,
+                                )
+                            }
                         }
 
                         else -> error("Unhandled Type ${it.type}")
