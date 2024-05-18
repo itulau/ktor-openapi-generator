@@ -1,13 +1,13 @@
 package com.papsign.ktor.openapigen.parameters.parsers.converters.primitive
 
 import com.papsign.ktor.openapigen.getKType
-import com.papsign.ktor.openapigen.memberProperties
+import com.papsign.ktor.openapigen.isValue
 import com.papsign.ktor.openapigen.parameters.parsers.converters.Converter
 import com.papsign.ktor.openapigen.parameters.parsers.converters.ConverterSelector
 import com.papsign.ktor.openapigen.parameters.util.localDateTimeFormatter
 import com.papsign.ktor.openapigen.parameters.util.offsetDateTimeFormatter
 import com.papsign.ktor.openapigen.parameters.util.zonedDateTimeFormatter
-import com.papsign.ktor.openapigen.strip
+import com.papsign.ktor.openapigen.unwrappedType
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.*
@@ -20,11 +20,6 @@ import kotlin.reflect.jvm.jvmErasure
 
 @Suppress("RemoveExplicitTypeArguments")
 object PrimitiveConverter : ConverterSelector {
-    private val KType.isValue get() = jvmErasure.isValue
-    // we also make a strip type to remove platform type
-    // for example, if we get a UUID! it will be converted to UUID
-    private val KType.unwrappedType get() = (if (isValue) memberProperties.first().type else this).strip()
-
     private inline fun <reified T> primitive(noinline cvt: (String) -> T): Pair<KType, Converter> {
         return getKType<T>() to object : Converter {
             override fun convert(value: String): Any? = cvt(value)

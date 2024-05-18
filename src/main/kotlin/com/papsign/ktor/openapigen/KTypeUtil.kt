@@ -18,6 +18,12 @@ internal fun KType.strip(nullable: Boolean = isMarkedNullable): KType {
     return jvmErasure.createType(arguments, nullable)
 }
 
+internal val KType.isValue get() = jvmErasure.isValue
+
+// we also make a strip type to remove platform type
+// for example, if we get a UUID! it will be converted to UUID
+internal val KType.unwrappedType get() = (if (isValue) memberProperties.first().type else this).strip()
+
 internal fun KType.deepStrip(nullable: Boolean = isMarkedNullable): KType {
     return jvmErasure.createType(arguments.map { it.copy(type = it.type?.deepStrip()) }, nullable)
 }

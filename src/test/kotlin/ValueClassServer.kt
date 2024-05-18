@@ -1,9 +1,11 @@
 import com.papsign.ktor.openapigen.OpenAPIGen
 import com.papsign.ktor.openapigen.annotations.parameters.PathParam
 import com.papsign.ktor.openapigen.annotations.properties.description.Description
+import com.papsign.ktor.openapigen.content.type.multipart.FormDataRequest
 import com.papsign.ktor.openapigen.route.apiRouting
 import com.papsign.ktor.openapigen.route.info
 import com.papsign.ktor.openapigen.route.path.normal.get
+import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import com.papsign.ktor.openapigen.schema.namer.DefaultSchemaNamer
@@ -37,6 +39,12 @@ object ValueClassServer {
 
     data class ProductQuery(
         @PathParam("Product ID") val id: ProductId,
+    )
+
+
+    @FormDataRequest
+    data class ProductQueryFormData(
+        val id: ProductId,
     )
 
     @JvmStatic
@@ -98,6 +106,17 @@ object ValueClassServer {
                             price = Currency(150),
                         ),
                     )
+
+                    route("/product") {
+                        post<Unit, Product, ProductQueryFormData>() { _, body ->
+                            val product = products.find { it.id == body.id }
+                            if (product != null) {
+                                respond(product)
+                            } else {
+                                pipeline.call.respond(HttpStatusCode.NotFound, "Product not found")
+                            }
+                        }
+                    }
 
                     route("{id}") {
                         get<ProductQuery, Product>(
