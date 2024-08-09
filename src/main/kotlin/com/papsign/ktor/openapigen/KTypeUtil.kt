@@ -1,9 +1,14 @@
 package com.papsign.ktor.openapigen
 
-import kotlin.reflect.*
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
+import kotlin.reflect.KType
+import kotlin.reflect.KTypeParameter
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.jvmErasure
+import kotlin.reflect.typeOf
 
 val unitKType = getKType<Unit>()
 
@@ -26,6 +31,18 @@ internal val KType.unwrappedType get() = (if (isValue) memberProperties.first().
 
 internal fun KType.deepStrip(nullable: Boolean = isMarkedNullable): KType {
     return jvmErasure.createType(arguments.map { it.copy(type = it.type?.deepStrip()) }, nullable)
+}
+
+internal fun KType.getIterableContentType(): KType? {
+    return arguments.getOrNull(0)?.type
+        ?: jvmErasure.supertypes.firstOrNull { it.isSubtypeOf(typeOf<Iterable<*>>()) }
+            ?.arguments?.getOrNull(0)?.type
+}
+
+internal fun KType.getArrayContentType(): KType? {
+    return arguments.getOrNull(0)?.type
+        ?: jvmErasure.supertypes.firstOrNull { it.isSubtypeOf(typeOf<Array<*>>()) }
+            ?.arguments?.getOrNull(0)?.type
 }
 
 data class KTypeProperty(

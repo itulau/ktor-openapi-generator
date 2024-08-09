@@ -7,15 +7,20 @@ import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import installJackson
 import installOpenAPI
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.routing.Routing
 import io.ktor.server.testing.contentType
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
+import io.ktor.server.testing.testApplication
 import io.ktor.server.testing.withTestApplication
-import org.junit.Assert.assertEquals
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class GenericsTest {
@@ -82,4 +87,35 @@ class GenericsTest {
         }
     }
 
+    @Test
+    fun testTypedListSubclass() {
+        val route = "/test"
+        testApplication {
+            application {
+                installOpenAPI()
+                installJackson()
+                apiRouting {
+                    (this.ktorRoute as Routing).trace { println(it.buildText()) }
+                    route(route) {
+                        post<Unit, StringList, StringList> { params, body ->
+                            respond(body)
+                        }
+                    }
+                }
+            }
+
+            client.post(route) {
+                header(HttpHeaders.ContentType, "application/json")
+                header(HttpHeaders.Accept, "application/json")
+                setBody("""["a","b","c"]""")
+            }.also { response ->
+                assertEquals(
+                    """["a","b","c"]""",
+                    response.bodyAsText()
+                )
+            }
+        }
+    }
+
+    class StringList(private val list: List<String>): List<String> by list
 }
