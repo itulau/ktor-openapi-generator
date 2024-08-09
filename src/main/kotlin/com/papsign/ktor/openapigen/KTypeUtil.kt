@@ -45,6 +45,18 @@ internal fun KType.getArrayContentType(): KType? {
             ?.arguments?.getOrNull(0)?.type
 }
 
+internal fun KType.getMapKeyContentType(): KType? {
+    return arguments.getOrNull(0)?.type
+        ?: jvmErasure.supertypes.firstOrNull { it.isSubtypeOf(typeOf<Map<*, *>>()) }
+            ?.arguments?.getOrNull(0)?.type
+}
+
+internal fun KType.getMapValueContentType(): KType? {
+    return arguments.getOrNull(1)?.type
+        ?: jvmErasure.supertypes.firstOrNull { it.isSubtypeOf(typeOf<Map<*, *>>()) }
+            ?.arguments?.getOrNull(1)?.type
+}
+
 data class KTypeProperty(
     val name: String,
     val type: KType,
