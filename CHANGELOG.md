@@ -1,3 +1,8 @@
+# 0.7.0
+Features:
+- Support `Iterable` subclasses
+- Support `Map` subclasses
+
 # 0.6.4
 Features:
 - Value class support in multipart requests
