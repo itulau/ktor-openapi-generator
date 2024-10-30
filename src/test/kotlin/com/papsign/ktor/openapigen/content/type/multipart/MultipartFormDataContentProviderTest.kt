@@ -7,16 +7,31 @@ import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import installJackson
 import installOpenAPI
-import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.server.testing.*
-import org.junit.Assert.assertEquals
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentDisposition
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.content.PartData
+import io.ktor.http.headersOf
+import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Test
-import java.time.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.OffsetTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.*
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.memberProperties
+import kotlin.test.assertEquals
 
 class MultipartFormDataContentProviderTest {
 
@@ -147,31 +162,39 @@ class MultipartFormDataContentProviderTest {
                 )
             )
         )
-        withTestApplication({
-            installOpenAPI()
-            installJackson()
-            apiRouting {
-                requests.forEach { (t, u) ->
-                    route(t) {
-                        post<Unit, Boolean, SimpleRequest> { _, body ->
-                            assertEquals(u.first, body)
-                            respond(true)
+        testApplication {
+            application {
+                installOpenAPI()
+                installJackson()
+                apiRouting {
+                    requests.forEach { (t, u) ->
+                        route(t) {
+                            post<Unit, Boolean, SimpleRequest> { _, body ->
+                                assertEquals(u.first, body)
+                                respond(true)
+                            }
                         }
                     }
                 }
             }
-        }) {
             requests.forEach { (t, u) ->
                 println("Test: $t")
-                handleRequest(HttpMethod.Post, t) {
+
+                client.post(t) {
                     val boundary = "***bbb***"
-                    addHeader(
+                    header(
                         HttpHeaders.ContentType,
                         ContentType.MultiPart.FormData.withParameter("boundary", boundary).toString()
                     )
-                    setBody(boundary, u.second)
-                }.apply {
-                    assertEquals(true, response.content?.toBoolean())
+
+                    setBody(
+                        MultiPartFormDataContent(
+                            boundary = boundary,
+                            parts = u.second,
+                        )
+                    )
+                }.let { response ->
+                    assertEquals(true, response.bodyAsText().toBoolean())
                 }
                 println("Test: $t success")
             }

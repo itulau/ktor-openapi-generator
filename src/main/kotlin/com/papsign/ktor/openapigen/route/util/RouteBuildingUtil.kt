@@ -10,8 +10,8 @@ fun Route.createConstantChild(): Route {
     return createChild(ConstantRouteSelector())
 }
 
-class ConstantRouteSelector: RouteSelector(RouteSelectorEvaluation.qualityConstant) {
-    override fun evaluate(context: RoutingResolveContext, segmentIndex: Int): RouteSelectorEvaluation {
+class ConstantRouteSelector: RouteSelector() {
+    override suspend fun evaluate(context: RoutingResolveContext, segmentIndex: Int): RouteSelectorEvaluation {
         return RouteSelectorEvaluation.Constant
     }
 }

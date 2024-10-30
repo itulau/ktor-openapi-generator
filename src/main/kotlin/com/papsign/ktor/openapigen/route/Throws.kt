@@ -5,10 +5,11 @@ import com.papsign.ktor.openapigen.modules.providers.ThrowInfoProvider
 import com.papsign.ktor.openapigen.modules.registerModule
 import com.papsign.ktor.openapigen.route.util.createConstantChild
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.application.PipelineCall
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
+import io.ktor.server.routing.intercept
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.coroutineScope
 import kotlin.reflect.KClass
@@ -60,7 +61,7 @@ inline fun <T: OpenAPIRoute<T>> T.throws(vararg responses: APIException<*, *>, c
     }
 }
 
-fun makeExceptionHandler(info: Array<out APIException<*, *>>): suspend PipelineContext<*, ApplicationCall>.(t: Throwable) -> Unit {
+fun makeExceptionHandler(info: Array<out APIException<*, *>>): suspend PipelineContext<*, PipelineCall>.(t: Throwable) -> Unit {
     val classes = info.associateBy { it.exceptionClass }
     fun findHandlerByType(clazz: KClass<*>): APIException<*, *>? {
         classes[clazz]?.let { return it }

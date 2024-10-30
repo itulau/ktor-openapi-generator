@@ -1,0 +1,6 @@
+style:
+  MaxLineLength:
+    active: false
+naming:
+  MemberNameEqualsClassName:
+    active: false

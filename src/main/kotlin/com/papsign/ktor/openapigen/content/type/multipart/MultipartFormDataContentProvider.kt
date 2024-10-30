@@ -1,11 +1,14 @@
 package com.papsign.ktor.openapigen.content.type.multipart
 
-import com.papsign.ktor.openapigen.*
+import com.papsign.ktor.openapigen.OpenAPIGen
+import com.papsign.ktor.openapigen.OpenAPIGenModuleExtension
 import com.papsign.ktor.openapigen.annotations.mapping.openAPIName
 import com.papsign.ktor.openapigen.content.type.BodyParser
 import com.papsign.ktor.openapigen.content.type.ContentTypeProvider
 import com.papsign.ktor.openapigen.exceptions.OpenAPIParseException
 import com.papsign.ktor.openapigen.exceptions.assertContent
+import com.papsign.ktor.openapigen.getKType
+import com.papsign.ktor.openapigen.isValue
 import com.papsign.ktor.openapigen.model.operation.MediaTypeEncodingModel
 import com.papsign.ktor.openapigen.model.operation.MediaTypeModel
 import com.papsign.ktor.openapigen.model.schema.SchemaModel
@@ -15,14 +18,23 @@ import com.papsign.ktor.openapigen.parameters.util.localDateTimeFormatter
 import com.papsign.ktor.openapigen.parameters.util.offsetDateTimeFormatter
 import com.papsign.ktor.openapigen.parameters.util.zonedDateTimeFormatter
 import com.papsign.ktor.openapigen.schema.builder.provider.FinalSchemaBuilderProviderModule
-import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.util.*
-import io.ktor.util.pipeline.*
+import com.papsign.ktor.openapigen.unitKType
+import com.papsign.ktor.openapigen.unwrappedType
+import io.ktor.http.ContentType
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
+import io.ktor.http.content.streamProvider
+import io.ktor.server.request.receiveMultipart
+import io.ktor.server.routing.RoutingContext
+import io.ktor.util.asStream
 import java.io.InputStream
-import java.time.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.OffsetTime
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.set
@@ -105,9 +117,9 @@ object MultipartFormDataContentProvider : BodyParser, OpenAPIGenModuleExtension 
 
     private val typeContentTypes = HashMap<KType, Map<String, MediaTypeEncodingModel>>()
 
-    override suspend fun <T : Any> parseBody(clazz: KType, request: PipelineContext<Unit, ApplicationCall>): T {
+    override suspend fun <T : Any> parseBody(clazz: KType, request: RoutingContext): T {
         val objectMap = HashMap<String, Any>()
-        request.context.receiveMultipart().forEachPart {
+        request.call.receiveMultipart().forEachPart {
             val name = it.name
             if (name != null) {
                 when (it) {

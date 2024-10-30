@@ -1,11 +1,11 @@
 import TestServer.setupBaseTestServer
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import com.papsign.ktor.openapigen.annotations.type.`object`.example.ExampleProvider
-import com.papsign.ktor.openapigen.annotations.type.`object`.example.WithExample
 import com.papsign.ktor.openapigen.annotations.type.number.integer.clamp.Clamp
 import com.papsign.ktor.openapigen.annotations.type.number.integer.max.Max
 import com.papsign.ktor.openapigen.annotations.type.number.integer.min.Min
+import com.papsign.ktor.openapigen.annotations.type.`object`.example.ExampleProvider
+import com.papsign.ktor.openapigen.annotations.type.`object`.example.WithExample
 import com.papsign.ktor.openapigen.annotations.type.string.example.DiscriminatorAnnotation
 import com.papsign.ktor.openapigen.route.apiRouting
 import com.papsign.ktor.openapigen.route.info
@@ -13,10 +13,13 @@ import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
 import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
-import io.ktor.http.*
-import io.ktor.server.testing.*
-import org.junit.Assert
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 fun NormalOpenAPIRoute.SealedRoute() {
     route("sealed") {
@@ -56,16 +59,21 @@ val ref = "\$ref"
 
 internal class OneOfLegacyGenerationTests {
     @Test
-    fun willDiscriminatorsBePresent() = withTestApplication({
-        setupBaseTestServer()
-        apiRouting {
-            SealedRoute()
+    fun willDiscriminatorsBePresent() = testApplication {
+        application {
+            setupBaseTestServer()
+            apiRouting {
+                SealedRoute()
+            }
         }
-    }) {
-        with(handleRequest(HttpMethod.Get, "//openapi.json")) {
-            Assert.assertEquals(HttpStatusCode.OK, response.status())
-            Assert.assertTrue(
-                response.content!!.contains(
+
+        val response = client.get("/openapi.json")
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.bodyAsText()
+
+
+            assertTrue(
+                body.contains(
                     """"Base" : {
         "discriminator" : {
           "propertyName" : "type"
@@ -86,8 +94,8 @@ internal class OneOfLegacyGenerationTests {
         }"""
                 )
             )
-            Assert.assertTrue(
-                response.content!!.contains(
+            assertTrue(
+                body.contains(
                     """"A" : {
         "discriminator" : {
           "propertyName" : "type"
@@ -109,6 +117,5 @@ internal class OneOfLegacyGenerationTests {
       }"""
                 )
             )
-        }
     }
 }

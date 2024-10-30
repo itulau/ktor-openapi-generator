@@ -8,15 +8,17 @@ import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import installJackson
 import installOpenAPI
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
+import io.ktor.http.contentType
 import io.ktor.server.routing.Routing
-import io.ktor.server.testing.contentType
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.setBody
-import io.ktor.server.testing.withTestApplication
-import org.junit.Assert.assertEquals
+import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class RoutingTest {
@@ -29,28 +31,30 @@ class RoutingTest {
     @Test
     fun testPostWithHeaderAndBodyParams() {
         val route = "/test"
-        withTestApplication({
-            installOpenAPI()
-            installJackson()
-            apiRouting {
-                (this.ktorRoute as Routing).trace { println(it.buildText()) }
-                route(route) {
-                    post<TestHeaderParams, TestResponse, TestBodyParams> { params, body ->
-                        respond(TestResponse("$params -> $body"))
+        testApplication {
+
+            application {
+                installOpenAPI()
+                installJackson()
+                apiRouting {
+                    (this.ktorRoute as Routing).trace { println(it.buildText()) }
+                    route(route) {
+                        post<TestHeaderParams, TestResponse, TestBodyParams> { params, body ->
+                            respond(TestResponse("$params -> $body"))
+                        }
                     }
                 }
             }
-        }) {
-            handleRequest(HttpMethod.Post, route) {
-                addHeader(HttpHeaders.ContentType, "application/json")
-                addHeader(HttpHeaders.Accept, "application/json")
-                addHeader("test-header", "123")
+            client.post(route) {
+                header(HttpHeaders.ContentType, "application/json")
+                header(HttpHeaders.Accept, "application/json")
+                header("test-header", "123")
                 setBody("{\"xyz\":456}")
-            }.apply {
-                assertTrue { response.contentType().match("application/json") }
+            }.let { response ->
+                assertTrue { response.contentType()!!.match("application/json") }
                 assertEquals(
                     "{\"msg\":\"${TestHeaderParams(123)} -> ${TestBodyParams(456)}\"}",
-                    response.content
+                    response.bodyAsText(),
                 )
             }
         }
@@ -59,26 +63,27 @@ class RoutingTest {
     @Test
     fun testGetWithHeaderParams() {
         val route = "/test"
-        withTestApplication({
-            installOpenAPI()
-            installJackson()
-            apiRouting {
-                (this.ktorRoute as Routing).trace { println(it.buildText()) }
-                route(route) {
-                    get<TestHeaderParams2, TestResponse> { params ->
-                        respond(TestResponse("$params"))
+        testApplication {
+            application {
+                installOpenAPI()
+                installJackson()
+                apiRouting {
+                    (this.ktorRoute as Routing).trace { println(it.buildText()) }
+                    route(route) {
+                        get<TestHeaderParams2, TestResponse> { params ->
+                            respond(TestResponse("$params"))
+                        }
                     }
                 }
             }
-        }) {
-            handleRequest(HttpMethod.Get, route) {
-                addHeader(HttpHeaders.Accept, "application/json")
-                addHeader("Test-Header", "123")
-            }.apply {
-                assertTrue { response.contentType().match("application/json") }
+            client.get(route) {
+                header(HttpHeaders.Accept, "application/json")
+                header("Test-Header", "123")
+            }.let { response ->
+                assertTrue { response.contentType()!!.match("application/json") }
                 assertEquals(
                     "{\"msg\":\"${TestHeaderParams2(123)}\"}",
-                    response.content
+                    response.bodyAsText()
                 )
             }
         }
@@ -87,25 +92,26 @@ class RoutingTest {
     @Test
     fun testPostWithUnitTypes() {
         val route = "/test"
-        withTestApplication({
-            installOpenAPI()
-            installJackson()
-            apiRouting {
-                (this.ktorRoute as Routing).trace { println(it.buildText()) }
-                route(route) {
-                    post<Unit, TestResponse, Unit> { params, body ->
-                        respond(TestResponse("Test Response"))
+        testApplication {
+            application {
+                installOpenAPI()
+                installJackson()
+                apiRouting {
+                    (this.ktorRoute as Routing).trace { println(it.buildText()) }
+                    route(route) {
+                        post<Unit, TestResponse, Unit> { params, body ->
+                            respond(TestResponse("Test Response"))
+                        }
                     }
                 }
             }
-        }) {
-            handleRequest(HttpMethod.Post, route) {
-                addHeader(HttpHeaders.Accept, "application/json")
-            }.apply {
-                assertTrue { response.contentType().match("application/json") }
+            client.post(route) {
+                header(HttpHeaders.Accept, "application/json")
+            }.let { response ->
+                assertTrue { response.contentType()!!.match("application/json") }
                 assertEquals(
                     "{\"msg\":\"Test Response\"}",
-                    response.content
+                    response.bodyAsText(),
                 )
             }
         }
@@ -114,25 +120,26 @@ class RoutingTest {
     @Test
     fun testGetWithUnitTypes() {
         val route = "/test"
-        withTestApplication({
-            installOpenAPI()
-            installJackson()
-            apiRouting {
-                (this.ktorRoute as Routing).trace { println(it.buildText()) }
-                route(route) {
-                    get<Unit, TestResponse> { params ->
-                        respond(TestResponse("Test Response"))
+        testApplication {
+            application {
+                installOpenAPI()
+                installJackson()
+                apiRouting {
+                    (this.ktorRoute as Routing).trace { println(it.buildText()) }
+                    route(route) {
+                        get<Unit, TestResponse> { params ->
+                            respond(TestResponse("Test Response"))
+                        }
                     }
                 }
             }
-        }) {
-            handleRequest(HttpMethod.Get, route) {
-                addHeader(HttpHeaders.Accept, "application/json")
-            }.apply {
-                assertTrue { response.contentType().match("application/json") }
+            client.get(route) {
+                header(HttpHeaders.Accept, "application/json")
+            }.let { response ->
+                assertTrue { response.contentType()!!.match("application/json") }
                 assertEquals(
                     "{\"msg\":\"Test Response\"}",
-                    response.content
+                    response.bodyAsText()
                 )
             }
         }

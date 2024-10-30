@@ -5,7 +5,7 @@ import com.papsign.ktor.openapigen.route.method
 import com.papsign.ktor.openapigen.route.preHandle
 import com.papsign.ktor.openapigen.route.response.OpenAPIPipelineResponseContext
 import io.ktor.http.HttpMethod
-import io.ktor.util.KtorDsl
+import io.ktor.utils.io.KtorDsl
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 

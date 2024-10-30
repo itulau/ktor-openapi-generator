@@ -15,18 +15,15 @@ import com.papsign.ktor.openapigen.schema.builder.provider.FinalSchemaBuilderPro
 import com.papsign.ktor.openapigen.unitKType
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.PluginBuilder
 import io.ktor.server.application.PluginInstance
-import io.ktor.server.application.call
 import io.ktor.server.application.pluginOrNull
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiationConfig
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
-import io.ktor.util.pipeline.PipelineContext
+import io.ktor.server.routing.RoutingContext
 import io.ktor.util.reflect.TypeInfo
-import io.ktor.util.reflect.platformType
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
@@ -111,10 +108,10 @@ object KtorContentProvider : ContentTypeProvider, BodyParser, ResponseSerializer
         return contentTypes!!.toList()
     }
 
-    override suspend fun <T : Any> parseBody(clazz: KType, request: PipelineContext<Unit, ApplicationCall>): T {
+    override suspend fun <T : Any> parseBody(clazz: KType, request: RoutingContext): T {
         val info = TypeInfo(
             type = clazz.jvmErasure,
-            reifiedType = clazz.platformType,
+//            reifiedType = clazz.platformType,
             kotlinType = clazz
         )
         return request.call.receive(info)
@@ -126,7 +123,7 @@ object KtorContentProvider : ContentTypeProvider, BodyParser, ResponseSerializer
 
     override suspend fun <T : Any> respond(
         response: T,
-        request: PipelineContext<Unit, ApplicationCall>,
+        request: RoutingContext,
         contentType: ContentType
     ) {
         request.call.respond(response as Any)
@@ -135,7 +132,7 @@ object KtorContentProvider : ContentTypeProvider, BodyParser, ResponseSerializer
     override suspend fun <T : Any> respond(
         statusCode: HttpStatusCode,
         response: T,
-        request: PipelineContext<Unit, ApplicationCall>,
+        request: RoutingContext,
         contentType: ContentType
     ) {
         request.call.respond(statusCode, response as Any)

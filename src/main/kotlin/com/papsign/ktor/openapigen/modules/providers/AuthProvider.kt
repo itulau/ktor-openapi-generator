@@ -8,12 +8,11 @@ import com.papsign.ktor.openapigen.modules.OpenAPIModule
 import com.papsign.ktor.openapigen.modules.handlers.AuthHandler
 import com.papsign.ktor.openapigen.route.path.auth.OpenAPIAuthenticatedRoute
 import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
-import io.ktor.server.application.ApplicationCall
-import io.ktor.util.pipeline.PipelineContext
+import io.ktor.server.routing.RoutingContext
 import kotlin.reflect.KType
 
 interface AuthProvider<TAuth>: OpenAPIModule, DependentModule {
-    suspend fun getAuth(pipeline: PipelineContext<Unit, ApplicationCall>): TAuth
+    suspend fun getAuth(pipeline: RoutingContext): TAuth
     fun apply(route: NormalOpenAPIRoute): OpenAPIAuthenticatedRoute<TAuth>
     val security: Iterable<Iterable<Security<*>>>
     override val handlers: Collection<Pair<KType, OpenAPIModule>>

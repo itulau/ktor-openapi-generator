@@ -7,18 +7,17 @@ import com.papsign.ktor.openapigen.modules.providers.AuthProvider
 import com.papsign.ktor.openapigen.modules.providers.StatusProvider
 import com.papsign.ktor.openapigen.route.OpenAPIRoute
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationCall
-import io.ktor.util.pipeline.PipelineContext
+import io.ktor.server.routing.RoutingContext
 import kotlin.reflect.full.findAnnotation
 
 interface Responder {
-    suspend fun <TResponse: Any> respond(response: TResponse, request: PipelineContext<Unit, ApplicationCall>)
-    suspend fun <TResponse: Any> respond(statusCode: HttpStatusCode, response: TResponse, request: PipelineContext<Unit, ApplicationCall>)
+    suspend fun <TResponse: Any> respond(response: TResponse, request: RoutingContext)
+    suspend fun <TResponse: Any> respond(statusCode: HttpStatusCode, response: TResponse, request: RoutingContext)
 }
 
 interface OpenAPIPipelineContext {
     val route: OpenAPIRoute<*>
-    val pipeline: PipelineContext<Unit, ApplicationCall>
+    val pipeline: RoutingContext
     val responder: Responder
 }
 
@@ -28,13 +27,13 @@ interface OpenAPIPipelineAuthContext<TAuth, TResponse> : OpenAPIPipelineResponse
 }
 
 class ResponseContextImpl<TResponse>(
-        override val pipeline: PipelineContext<Unit, ApplicationCall>,
+        override val pipeline: RoutingContext,
         override val route: OpenAPIRoute<*>,
         override val responder: Responder
 ) : OpenAPIPipelineResponseContext<TResponse>
 
 class AuthResponseContextImpl<TAuth, TResponse>(
-        override val pipeline: PipelineContext<Unit, ApplicationCall>,
+        override val pipeline: RoutingContext,
         override val authProvider: AuthProvider<TAuth>,
         override val route: OpenAPIRoute<*>,
         override val responder: Responder

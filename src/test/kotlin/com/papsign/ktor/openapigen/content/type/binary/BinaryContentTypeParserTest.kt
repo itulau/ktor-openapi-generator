@@ -5,15 +5,20 @@ import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import installOpenAPI
-import io.ktor.http.*
-import io.ktor.server.testing.contentType
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.setBody
-import io.ktor.server.testing.withTestApplication
-import org.junit.Assert.*
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.readRawBytes
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.server.testing.testApplication
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 import java.io.InputStream
 import kotlin.random.Random
+import kotlin.test.assertEquals
 
 const val contentType = "image/png"
 
@@ -28,63 +33,65 @@ class BinaryContentTypeParserTest {
     fun testBinaryParsing() {
         val route = "/test"
         val bytes = Random.nextBytes(20)
-        withTestApplication({
-            installOpenAPI()
-            apiRouting {
-                //(this.ktorRoute as Routing).trace { println(it.buildText()) }
-                route(route) {
-                    post<Unit, Stream, Stream> { _, body ->
-                        val actual = body.stream.readBytes()
-                        assertArrayEquals(bytes, actual)
-                        respond(Stream(actual.inputStream()))
+        testApplication {
+            application {
+                installOpenAPI()
+                apiRouting {
+                    //(this.ktorRoute as Routing).trace { println(it.buildText()) }
+                    route(route) {
+                        post<Unit, Stream, Stream> { _, body ->
+                            val actual = body.stream.readBytes()
+                            assertArrayEquals(bytes, actual)
+                            respond(Stream(actual.inputStream()))
+                        }
                     }
                 }
             }
-        }) {
+
 
             println("Test: Normal")
-            handleRequest(HttpMethod.Post, route) {
-                addHeader(HttpHeaders.ContentType, contentType)
-                addHeader(HttpHeaders.Accept, contentType)
+            client.post(route) {
+                header(HttpHeaders.ContentType, contentType)
+                header(HttpHeaders.Accept, contentType)
                 setBody(bytes)
-            }.apply {
+            }.let { response ->
                 assertEquals(ContentType.parse(contentType), response.contentType())
-                assertArrayEquals(bytes, response.byteContent)
+                assertArrayEquals(bytes, response.readRawBytes())
             }
 
             println("Test: Missing Accept")
-            handleRequest(HttpMethod.Post, route) {
-                addHeader(HttpHeaders.ContentType, contentType)
+            client.post(route) {
+                header(HttpHeaders.ContentType, contentType)
                 setBody(bytes)
-            }.apply {
+            }.let { response ->
                 assertEquals(ContentType.parse(contentType), response.contentType())
-                assertArrayEquals(bytes, response.byteContent)
+                assertArrayEquals(bytes, response.readRawBytes())
             }
 
             println("Test: Missing Content-Type")
-            handleRequest(HttpMethod.Post, route) {
-                addHeader(HttpHeaders.Accept, contentType)
+            client.post(route) {
+                header(HttpHeaders.Accept, contentType)
                 setBody(bytes)
-            }.apply {
-                assertEquals(HttpStatusCode.UnsupportedMediaType, response.status())
+            }.let { response ->
+                assertEquals(HttpStatusCode.UnsupportedMediaType, response.status)
             }
 
             println("Test: Bad Accept")
-            handleRequest(HttpMethod.Post, route) {
-                addHeader(HttpHeaders.ContentType, contentType)
-                addHeader(HttpHeaders.Accept, ContentType.Application.Json.toString())
+            client.post(route) {
+                header(HttpHeaders.ContentType, contentType)
+                header(HttpHeaders.Accept, ContentType.Application.Json.toString())
                 setBody(bytes)
-            }.apply {
-                assertEquals(HttpStatusCode.BadRequest, response.status())
+            }.let { response ->
+                assertEquals(HttpStatusCode.BadRequest, response.status)
             }
 
             println("Test: Bad Content-Type")
-            handleRequest(HttpMethod.Post, route) {
-                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                addHeader(HttpHeaders.Accept, contentType)
+            client.post(route) {
+                header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                header(HttpHeaders.Accept, contentType)
                 setBody(bytes)
-            }.apply {
-                assertEquals(HttpStatusCode.UnsupportedMediaType, response.status())
+            }.let { response ->
+                assertEquals(HttpStatusCode.UnsupportedMediaType, response.status)
             }
         }
     }
