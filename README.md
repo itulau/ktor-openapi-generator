@@ -1,5 +1,7 @@
 # Ktor OpenAPI Generator
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.darkxanter/ktor-openapi-generator)](https://central.sonatype.com/artifact/io.github.darkxanter/ktor-openapi-generator)
+
 The Ktor OpenAPI Generator is a library to automatically generate the descriptor as you route your ktor application.
 
 ```kotlin
