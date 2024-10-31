@@ -1,3 +1,8 @@
+# 0.8.0
+Infrastructure:
+- Kotlin 2.0.21
+- Ktor 3.0.1
+
 # 0.7.0
 Features:
 - Support `Iterable` subclasses
