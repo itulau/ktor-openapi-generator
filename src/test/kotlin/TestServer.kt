@@ -278,7 +278,7 @@ object TestServer {
                     email = "support@test.com"
                 }
             }
-            server("https://api.test.com/") {
+            server("http://localhost:8080") {
                 description = "Main production server"
             }
             replaceModule(DefaultSchemaNamer, object : SchemaNamer {

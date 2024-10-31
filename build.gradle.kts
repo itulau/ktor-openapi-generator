@@ -1,4 +1,5 @@
 import org.gradle.jvm.tasks.Jar
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import pl.allegro.tech.build.axion.release.domain.properties.TagProperties
 import pl.allegro.tech.build.axion.release.domain.scm.ScmPosition
 import java.net.URL
@@ -74,10 +75,14 @@ java {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_1_8)
+        }
     }
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_1_8)
+        }
     }
 
     test {

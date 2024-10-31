@@ -15,23 +15,26 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
 import io.ktor.util.AttributeKey
 import org.reflections.Reflections
+import org.reflections.util.ConfigurationBuilder
 import kotlin.reflect.full.starProjectedType
 
 class OpenAPIGen(
     config: Configuration,
-    @Deprecated("Will be replaced with less dangerous alternative when the use case has been fleshed out.") val pipeline: ApplicationCallPipeline
+    @Deprecated("Will be replaced with less dangerous alternative when the use case has been fleshed out.") val pipeline: ApplicationCallPipeline,
 ) {
     private val log = classLogger()
-
-    val api = config.api
-
     private val tags = HashMap<String, APITag>()
 
+    val api = config.api
     val globalModuleProvider = CachingModuleProvider()
 
     init {
         (config.scanPackagesForModules + javaClass.`package`.name).forEach { packageName ->
-            val reflections = Reflections(packageName)
+            val reflections = Reflections(
+                ConfigurationBuilder()
+                    .forPackages(packageName)
+                    .addClassLoaders(OpenAPIGen::class.java.classLoader)
+            )
             log.debug("Registering modules in package $packageName")
             val objects = reflections.getSubTypesOf(OpenAPIGenExtension::class.java).mapNotNull { it.kotlin.objectInstance }
             objects.forEach {
@@ -120,7 +123,11 @@ class OpenAPIGen(
             }
 
             if (cfg.serveSwaggerUi) {
-                val ui = SwaggerUi(cfg.swaggerUiPath, cfg.swaggerUiVersion, if (cfg.serveOpenApiJson) cfg.openApiJsonPath else null)
+                val ui = SwaggerUi(
+                    cfg.swaggerUiPath,
+                    cfg.swaggerUiVersion,
+                    if (cfg.serveOpenApiJson) cfg.openApiJsonPath else null
+                )
                 val swaggerRoot = "/${cfg.swaggerUiPath.removePrefix("/")}"
                 val swaggerUiResources = "/${cfg.swaggerUiPath.trim('/')}/"
                 pipeline.intercept(ApplicationCallPipeline.Call) {
