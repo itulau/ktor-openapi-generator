@@ -13,6 +13,7 @@ swaggerUi = "5.17.2"
 reflections = "0.10.2"
 jackson = "2.18.1"
 axion = "1.15.1"
+commonsCodec = "1.17.1"
 
 [libraries]
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
@@ -33,6 +34,7 @@ reflections = { module = "org.reflections:reflections", version.ref = "reflectio
 swaggerUi = { module = "org.webjars:swagger-ui", version.ref = "swaggerUi" }
 jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+commonsCodec = { group = "commons-codec", name = "commons-codec", version.ref = "commonsCodec" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

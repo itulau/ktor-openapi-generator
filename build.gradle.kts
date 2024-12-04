@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import pl.allegro.tech.build.axion.release.domain.properties.TagProperties
 import pl.allegro.tech.build.axion.release.domain.scm.ScmPosition
 import java.net.URL
+import org.apache.commons.codec.digest.DigestUtils
+import org.jetbrains.kotlin.tooling.core.closureSequence
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -30,15 +32,33 @@ scmVersion {
         "feature/.*" to "incrementMinor"
     )
 }
+val groupName: String by project
+val groupPath = groupName.replace(".","/")
+val archivesName: String by project
+val ver: String by project
 
-group = "io.github.darkxanter"
-base.archivesName.set("ktor-open-api")
-version = scmVersion.version
+group = groupName
+base.archivesName.set(archivesName)
+version = ver
 
-println("version $version")
+val buildPath = "$rootDir/build/$groupPath/$archivesName/$ver"
+
+tasks.withType<Jar> {
+    destinationDirectory = File(buildPath)
+}
+tasks.withType<GenerateMavenPom> {
+    destination = file("$buildPath/$archivesName-$version.pom")
+}
 
 repositories {
     mavenCentral()
+}
+
+buildscript {
+    repositories { mavenCentral() }
+    dependencies {
+        classpath(libs.commonsCodec)
+    }
 }
 
 dependencies {
@@ -98,13 +118,48 @@ tasks {
 
                 sourceLink {
                     localDirectory.set(file("src/main/kotlin"))
-                    remoteUrl.set(URL("https://github.com/darkxanter/ktor-openapi-generator/tree/master/src/main/kotlin"))
+                    remoteUrl.set(URL("https://github.com/itulau/ktor-openapi-generator/tree/master/src/main/kotlin"))
                     remoteLineSuffix.set("#L")
                 }
             }
         }
     }
 }
+
+tasks.register("generateChecksums") {
+    group = "verification" // Optional: Assign a task group
+    description = "Generates MD5 and SHA1 checksums"
+
+    val destinationDir = File(buildPath)
+
+    doLast {
+        if (!destinationDir.exists()) {
+            logger.error("Directory $destinationDir does not exist.")
+            return@doLast
+        }
+
+        // Process all .jar and .pom files in the directory
+        fileTree(destinationDir).matching {
+            include("*.jar", "*.pom")
+        }.forEach { file ->
+            if (file.length() == 0L) {
+                logger.warn("Skipping checksum generation for ${file.name} because it is empty.")
+                return@forEach
+            }
+
+            val md5Checksum = file.inputStream().use { DigestUtils.md5Hex(it) }
+            val checksumFileMD5 = File("${file.absolutePath}.md5")
+            checksumFileMD5.writeText(md5Checksum)
+            logger.lifecycle("Generated MD5 checksum for ${file.name}: ${checksumFileMD5.absolutePath}")
+
+            val sha1Checksum = file.inputStream().use { DigestUtils.sha1Hex(it) }
+            val checksumFileSHA1 = File("${file.absolutePath}.sha1")
+            checksumFileSHA1.writeText(sha1Checksum)
+            logger.lifecycle("Generated SHA1 checksum for ${file.name}: ${checksumFileSHA1.absolutePath}")
+        }
+    }
+}
+
 
 // ------------------------------------ Deployment Configuration  ------------------------------------
 // deployment configuration - deploy with sources and documentation
@@ -131,12 +186,12 @@ publishing {
             pom {
                 name.set("Ktor OpenAPI/Swagger 3 Generator")
                 description.set("The Ktor OpenAPI Generator is a library to automatically generate the descriptor as you route your ktor application.")
-                url.set("https://github.com/darkxanter/ktor-openapi-generator")
+                url.set("https://github.com/itulau/ktor-openapi-generator")
                 packaging = "jar"
                 licenses {
                     license {
                         name.set("Apache-2.0 License")
-                        url.set("https://github.com/darkxanter/ktor-openapi-generator/blob/master/LICENSE")
+                        url.set("https://github.com/itulau/ktor-openapi-generator/blob/master/LICENSE")
                     }
                 }
                 developers {
@@ -153,10 +208,14 @@ publishing {
                         id.set("darkxanter")
                         name.set("Sergey Shumov")
                     }
+                    developer {
+                        id.set("itulau")
+                        name.set("Lautaro Iturregui")
+                    }
                 }
                 scm {
-                    connection.set("scm:git:git://github.com/darkxanter/ktor-openapi-generator.git")
-                    url.set("https://github.com/darkxanter/ktor-openapi-generator")
+                    connection.set("scm:git:git://github.com/itulau/ktor-openapi-generator.git")
+                    url.set("https://github.com/itulau/ktor-openapi-generator")
                 }
             }
         }
