@@ -23,10 +23,10 @@ import com.papsign.ktor.openapigen.unwrappedType
 import io.ktor.http.ContentType
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
-import io.ktor.http.content.streamProvider
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.routing.RoutingContext
 import io.ktor.util.asStream
+import io.ktor.utils.io.jvm.javaio.*
 import java.io.InputStream
 import java.time.Instant
 import java.time.LocalDate
@@ -128,7 +128,7 @@ object MultipartFormDataContentProvider : BodyParser, OpenAPIGenModuleExtension 
                     }
 
                     is PartData.FileItem -> {
-                        objectMap[name] = NamedFileInputStream(it.originalFileName, it.contentType, it.streamProvider())
+                        objectMap[name] = NamedFileInputStream(it.originalFileName, it.contentType, it.provider().toInputStream())
                     }
 
                     is PartData.BinaryItem -> {
